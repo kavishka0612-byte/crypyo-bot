@@ -4,7 +4,7 @@ import requests
 # පිටුවේ මූලික සැකසුම්
 st.set_page_config(page_title="Crypto Pulse & Market Hub", page_icon="🌐", layout="wide")
 
-# CSS මඟින් ලස්සන මෝස්තර සහ Ticker එකතු කිරීම
+# CSS මඟින් ලස්සන මෝස්තර එකතු කිරීම
 st.markdown("""
     <style>
     .main {
@@ -33,17 +33,17 @@ st.markdown("""
 # උඩින් දිගට යන ප්‍රවෘත්ති ටිකක් (Ticker)
 st.markdown("""
     <div class="ticker-container">
-        🔥 <b>Breaking News:</b> Bitcoin hits new milestones! | 🚀 Solana ecosystem expands rapidly! | 💡 Ethereum gas fees drop significantly! | 📈 Crypto market shows strong bullish momentum today!
+        🔥 <b>Live Crypto Market:</b> Real-time tracking updated continuously. | 📈 Monitor top momentum coins instantly!
     </div>
 """, unsafe_allow_html=True)
 
 st.title("🌐 Crypto Pulse & Market Hub")
-st.write("වෙබ් අඩවියට සාදරයෙන් පිළිගනිමු! මෙහි ලයිව් ක්‍රිප්ටෝ මිල ගණන් සහ විස්තර බලාගත හැක.")
+st.write("වෙබ් අඩවියට සාදරයෙන් පිළිගනිමු! මෙහි ලයිව් ක්‍රිප්ටෝ මිල ගණන් සහ මෝමන්ට් බලාගත හැක.")
 
 # ටැබ් මඟින් අංශ වෙන් කිරීම
 tab1, tab2, tab3 = st.tabs(["🏠 Home", "🪙 Coins", "📰 Latest News"])
 
-# Binance API මඟින් 24hr දත්ත ලබා ගැනීම (මෝමන්ට් බැලීම සඳහා)
+# Binance API මඟින් දත්ත ලබා ගැනීම
 try:
     url_24hr = "https://api.binance.com/api/v3/ticker/24hr"
     res_24hr = requests.get(url_24hr)
@@ -52,7 +52,6 @@ except:
     stats_data = []
 
 with tab1:
-    # සර්ච් බාර් එක වම් පැත්තේ උඩ කෙළවරට සකස් කිරීම
     col_search, col_space = st.columns([1, 2])
     with col_search:
         st.subheader("🔍 Search Coin")
@@ -64,14 +63,20 @@ with tab1:
             st.write(f"සැලකිය යුතු ප්‍රතිඵල ({len(filtered)}):")
             for c in filtered[:10]:
                 change_val = float(c.get('priceChangePercent', 0))
-                trend_icon = "📈" if change_val >= 0 else "📉"
+                trend_icon = "📈" if change_val > 0.5 else ("📉" if change_val < -0.5 else "⚖️")
                 st.info(f"{trend_icon} **{c['symbol']}** : ${float(c['price']):,.4f} ({change_val:+.2f}%)")
         else:
             st.warning("අදාළ නමින් කොයින් එකක් හමු නොවීය.")
 
     st.divider()
     st.subheader("🔥 Home - වෙළඳපොළේ වැඩිම මෝමන්ට් ඇති ප්‍රධාන කොයින් 10")
-    st.write("මුල් පිටුවෙන්ම බලාගත හැකි ප්‍රධාන කොයින් 10 ක ලැයිස්තුව:")
+    
+    # කාල රාමුව (Time Frame) තෝරාගැනීමේ පහසුකම
+    time_frame = st.selectbox(
+        "⏱️ කාල රාමුව (Time Frame) තෝරන්න:",
+        ["විනාඩිය (1m)", "විනාඩි 3 (3m)", "විනාඩි 5 (5m)", "පැය 12 (12h)", "පැය 24 (24h)", "සියලු කාලසීමා (All Time)"],
+        key="home_timeframe"
+    )
 
     if stats_data:
         # මිල වෙනස්වීමේ ප්‍රතිශතය මත වැඩිම මෝමන්ට් එකක් ඇති කොයින් 10 තෝරා ගැනීම
@@ -85,13 +90,20 @@ with tab1:
             price = float(coin['price'])
             change_percent = float(coin['priceChangePercent'])
             
-            status_trend = "📈 අප් (Up)" if change_percent >= 0 else "📉 ඩවුන් (Down)"
+            # මෝමන්ට් තත්ත්වය තීරණය කිරීම (Up, Down හෝ Ranging)
+            if change_percent > 0.5:
+                status_trend = "📈 අප් (Up)"
+            elif change_percent < -0.5:
+                status_trend = "📉 ඩවුන් (Down)"
+            else:
+                status_trend = "⚖️ රේන්ජින් (Ranging)"
+                
             short_name = sym.replace('USDT', '')
             full_name = f"{short_name} Token"
             
             momentum_list.append({
                 "No.": idx,
-                "Full Name": full_name,
+                "Coin Name": full_name,
                 "Short Name": short_name,
                 "Market Momentum": status_trend,
                 "Current Price ($)": f"${price:,.4f}"
@@ -102,7 +114,6 @@ with tab1:
 
 with tab2:
     st.subheader("🪙 Coins - සියලුම ක්‍රිප්ටෝ කොයින් ලැයිස්තුව")
-    st.write("මෙහි අනෙකුත් කොයින් ලැයිස්තුව බලාගත හැක.")
     if stats_data:
         basic_list = []
         for idx, c in enumerate(stats_data[:20], 1):
@@ -116,11 +127,9 @@ with tab2:
 with tab3:
     st.subheader("📰 Latest Crypto News & Updates")
     st.markdown("""
-    * **1. Bitcoin Bull Run Continues:** Institutional investors are heavily accumulating BTC as market sentiment turns extremely positive.
-    * **2. Ethereum Layer 2 Scaling:** Gas fees reach historical lows following major network upgrades this quarter.
-    * **3. Solana DeFi Volume Surges:** Decentralized exchanges on Solana record massive daily transaction volumes.
-    * **4. Global Crypto Regulations Evolve:** Major economies introduce clearer frameworks for digital asset trading.
-    * **5. Web3 Gaming Growth:** New blockchain-based gaming ecosystems attract millions of active monthly users.
+    * **1. Bitcoin Bull Run Continues:** Institutional investors are heavily accumulating BTC.
+    * **2. Ethereum Layer 2 Scaling:** Gas fees reach historical lows following upgrades.
+    * **3. Solana DeFi Volume Surges:** Decentralized exchanges record massive volumes.
     """)
 
 st.divider()
